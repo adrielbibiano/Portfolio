@@ -11,12 +11,12 @@ function useWeather() {
       .then((r) => r.json())
       .then((data) => {
         const code = data.current.weathercode;
-        const icons = {
+        const icons: Record<number, string> = {
           0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
           45: "🌫️", 48: "🌫️", 51: "🌦️", 61: "🌧️",
           80: "🌦️", 95: "⛈️",
         };
-        const icon = icons[code] ?? "🌡️";
+        const icon = icons[code as number] ?? "🌡️";
         setWeather({
           temp: Math.round(data.current.temperature_2m),
           wind: Math.round(data.current.windspeed_10m),
