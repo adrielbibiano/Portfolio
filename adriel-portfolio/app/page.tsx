@@ -1,9 +1,36 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
+
+type Page =
+  | "home"
+  | "sobre"
+  | "academico"
+  | "profissional"
+  | "projetos";
+
+type Weather = {
+  temp: number;
+  wind: number;
+  icon: string;
+} | null;
+
+type Repo = {
+  name: string;
+  description: string;
+  language: string;
+  stars: number;
+  forks: number;
+  url: string;
+  updatedAt: string;
+};
 
 // ─── Weather API Hook ────────────────────────────────────────────────────────
 function useWeather() {
-  const [weather, setWeather] = useState(null);
+ const [weather, setWeather] = useState<{
+  temp: number;
+  wind: number;
+  icon: string;
+} | null>(null);
   useEffect(() => {
     fetch(
       "https://api.open-meteo.com/v1/forecast?latitude=-8.1127&longitude=-34.9025&current=temperature_2m,weathercode,windspeed_10m&timezone=America%2FRecife"
@@ -23,16 +50,22 @@ function useWeather() {
           icon,
         });
       })
-      .catch(() => setWeather({ temp: "--", wind: "--", icon: "🌡️" }));
+      .catch(() =>
+  setWeather({
+    temp: 0,
+    wind: 0,
+    icon: "🌡️",
+  })
+);
   }, []);
   return weather;
 }
 
 // ─── GitHub API Hook ─────────────────────────────────────────────────────────
 function useGitHub() {
-  const [repos, setRepos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const [repos, setRepos] = useState<Repo[]>([]);
+const [loading, setLoading] = useState<boolean>(true);
+const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("https://api.github.com/users/adrielbibiano/repos?sort=updated&per_page=12", {
@@ -43,7 +76,7 @@ function useGitHub() {
         return r.json();
       })
       .then((data) => {
-        const mapped = data.map((r) => ({
+        const mapped = data.map((r: any) => ({
           name: r.name,
           description: r.description || "Sem descrição",
           language: r.language || "Other",
@@ -124,7 +157,13 @@ const EXPERIENCE = [
 ];
 
 // ─── Animated Number ─────────────────────────────────────────────────────────
-function AnimatedBar({ level, color }) {
+function AnimatedBar({
+  level,
+  color,
+}: {
+  level: number;
+  color: string;
+}) {
   const [w, setW] = useState(0);
   useEffect(() => { const t = setTimeout(() => setW(level), 300); return () => clearTimeout(t); }, [level]);
   return (
@@ -139,8 +178,20 @@ function AnimatedBar({ level, color }) {
 }
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
-function Nav({ active, setPage }) {
-  const links = ["home", "sobre", "academico", "profissional", "projetos"];
+function Nav({
+  active,
+  setPage,
+}: {
+  active: Page;
+  setPage: (page: Page) => void;
+}) {
+  const links = [
+  "home",
+  "sobre",
+  "academico",
+  "profissional",
+  "projetos",
+] as const;
   const labels = { home: "Home", sobre: "Sobre", academico: "Acadêmico", profissional: "Profissional", projetos: "Projetos" };
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -208,7 +259,13 @@ function Nav({ active, setPage }) {
 }
 
 // ─── HOME ────────────────────────────────────────────────────────────────────
-function Home({ setPage, weather }) {
+function Home({
+  setPage,
+  weather,
+}: {
+  setPage: (page: Page) => void;
+  weather: Weather;
+}) {
   return (
     <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "8rem 2rem 4rem", position: "relative", overflow: "hidden" }}>
       {/* Grid bg */}
@@ -268,8 +325,15 @@ function Home({ setPage, weather }) {
             transition: "transform 0.2s, box-shadow 0.2s",
             boxShadow: "0 0 30px rgba(233,196,106,0.25)",
           }}
-            onMouseOver={e => { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = "0 6px 40px rgba(233,196,106,0.4)"; }}
-            onMouseOut={e => { e.target.style.transform = ""; e.target.style.boxShadow = "0 0 30px rgba(233,196,106,0.25)"; }}
+           onMouseOver={(e) => {
+  e.currentTarget.style.transform = "translateY(-2px)";
+  e.currentTarget.style.boxShadow = "0 6px 40px rgba(233,196,106,0.4)";
+}}
+
+onMouseOut={(e) => {
+  e.currentTarget.style.transform = "";
+  e.currentTarget.style.boxShadow = "0 0 30px rgba(233,196,106,0.25)";
+}}
           >Ver Projetos</button>
           <button onClick={() => setPage("sobre")} style={{
             background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,0.2)",
@@ -278,8 +342,8 @@ function Home({ setPage, weather }) {
             letterSpacing: "0.1em", textTransform: "uppercase",
             transition: "all 0.2s",
           }}
-            onMouseOver={e => { e.target.style.borderColor = "#e9c46a"; e.target.style.color = "#e9c46a"; }}
-            onMouseOut={e => { e.target.style.borderColor = "rgba(255,255,255,0.2)"; e.target.style.color = "#fff"; }}
+            onMouseOver={e => { e.currentTarget.style.borderColor = "#e9c46a"; e.currentTarget.style.color = "#e9c46a"; }}
+            onMouseOut={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "#fff"; }}
           >Sobre Mim</button>
         </div>
 
@@ -490,12 +554,25 @@ function Profissional() {
 }
 
 // ─── PROJETOS ─────────────────────────────────────────────────────────────────
-function Projetos({ repos, loading, error }) {
-  const langColors = {
-    Java: "#e76f51", JavaScript: "#f4d03f", SQL: "#48cae4",
-    TypeScript: "#3b82f6", HTML: "#f97316", CSS: "#a855f7",
-    Python: "#facc15", Other: "#94a3b8",
-  };
+function Projetos({
+  repos,
+  loading,
+  error,
+}: {
+  repos: Repo[];
+  loading: boolean;
+  error: string | null;
+}) {
+  const langColors: Record<string, string> = {
+  Java: "#e76f51",
+  JavaScript: "#f4d03f",
+  SQL: "#48cae4",
+  TypeScript: "#3b82f6",
+  HTML: "#f97316",
+  CSS: "#a855f7",
+  Python: "#facc15",
+  Other: "#94a3b8",
+};
 
   return (
     <section style={{ minHeight: "100vh", padding: "8rem 2rem 6rem" }}>
@@ -634,7 +711,11 @@ function Projetos({ repos, loading, error }) {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function SectionLabel({ children }) {
+function SectionLabel({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div style={{
       fontFamily: "'Syne', sans-serif", fontSize: "0.72rem",
@@ -642,7 +723,7 @@ function SectionLabel({ children }) {
       marginBottom: "1rem", opacity: 0.7
     }}>{children}</div>
   );
-}
+};
 const h2Style = {
   fontFamily: "'Syne', sans-serif", fontWeight: 800,
   fontSize: "clamp(2rem, 5vw, 3.5rem)", lineHeight: 1.1,
@@ -669,11 +750,11 @@ function Footer() {
 
 // ─── ROOT APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [page, setPage] = useState("home");
+  const [page, setPage] = useState<Page>("home");
   const weather = useWeather();
   const { repos, loading: reposLoading, error: reposError } = useGitHub();
 
-  const pageMap = {
+  const pageMap: Record<Page, React.ReactElement> = {
     home: <Home setPage={setPage} weather={weather} />,
     sobre: <Sobre />,
     academico: <Academico />,
